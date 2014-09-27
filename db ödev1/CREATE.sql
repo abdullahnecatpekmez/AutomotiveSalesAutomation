@@ -1,0 +1,43 @@
+USE [AUTOMATION 1]
+DROP TABLE SALES
+DROP TABLE OPTIONS
+DROP TABLE SALESPERSON
+DROP TABLE CAR
+
+CREATE TABLE  CAR
+(
+	CSerialNo varchar(9)  ,
+	Model varchar(15) unique NOT NULL,
+	Manufacturer varchar(15) NOT NULL,
+	CPrice float ,
+	PRIMARY KEY(CSerialNo),
+	CHECK (CPrice>0)
+
+);
+CREATE TABLE SALESPERSON
+(
+	SPersonID VARCHAR(3) ,
+	Name VARCHAR(15) NOT NULL,
+	Phone VARCHAR(11),
+	PRIMARY KEY(SPersonID)
+);
+CREATE TABLE  OPTIONS
+(
+	OSerialNo varchar(9),
+	OptName varchar(40),
+	OptPrice float NOT NULL,
+	FOREIGN KEY(OSerialNo) REFERENCES CAR(CSerialNo) ON DELETE CASCADE ON UPDATE CASCADE ,
+	PRIMARY KEY(OSerialNo,OptName),
+	CHECK (OPTPrice>0)
+);
+
+CREATE TABLE  SALES
+(
+	SPersonID varchar(3) ,
+	SSerialNO varchar(9) unique ,
+	SDate datetime,
+	SPrice float ,
+	FOREIGN KEY(SSerialNO) REFERENCES CAR(CSerialNO)  ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY(SPersonID)REFERENCES SALESPERSON(SPersonID)  ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY(SPersonID,SSerialNO)
+);

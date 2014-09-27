@@ -1,0 +1,93 @@
+USE [AUTOMATION 2]
+ALTER TABLE CAR_PACKAGE DROP CONSTRAINT AddPackageInvalidModel
+ALTER TABLE CAR_PACKAGE DROP CONSTRAINT NotIncluedOptionPackage
+ALTER TABLE CAR_PACKAGE DROP CONSTRAINT AddPackageForUnSoldCar
+ALTER TABLE CAR_OPTION DROP CONSTRAINT AddOptionInvalidModel
+ALTER TABLE CAR_OPTION DROP CONSTRAINT AddOptionForUnSoldCar
+
+IF OBJECT_ID('ModelNoControlCarPackage') IS NOT NULL
+    DROP FUNCTION ModelNoControlCarPackage
+IF OBJECT_ID('ModelNoContrlCarOption') IS NOT NULL
+    DROP FUNCTION dbo.ModelNoContrlCarOption
+IF OBJECT_ID('numberOfOption') IS NOT NULL
+    DROP FUNCTION dbo.NumberOfOption
+IF OBJECT_ID('AddPackageUnSoldCar') IS NOT NULL
+    DROP FUNCTION dbo.AddPackageUnSoldCar
+IF OBJECT_ID('AddOptionUnSoldCar') IS NOT NULL
+    DROP FUNCTION dbo.AddOptionUnSoldCar
+
+GO
+CREATE FUNCTION dbo.ModelNoControlCarPackage()
+RETURNS INT
+AS BEGIN RETURN 
+(
+	SELECT COUNT(*)
+	FROM  CAR_PACKAGE C
+	LEFT JOIN CAR S
+	ON C.SerialNO=S.SerialNO and C.ModelNo=S.ModelNO
+	WHERE S.SerialNO IS NULL
+)
+END;--modele uygunsuz paket alýmý
+
+GO
+CREATE FUNCTION dbo.ModelNoContrlCarOption()
+RETURNS INT
+AS BEGIN RETURN 
+(
+	SELECT COUNT(*)
+	FROM  CAR_OPTION C
+	LEFT JOIN CAR S
+	ON C.SerialNO=S.SerialNO and C.ModelNo=S.ModelNO
+	WHERE S.SerialNO IS NULL
+)
+END;--modele uygunsuz opsiyon alýmý
+
+GO
+CREATE FUNCTION dbo.NumberOfOption ()
+RETURNS INT
+AS BEGIN RETURN
+(
+	SELECT COUNT(*)
+	FROM  P_OPTION P
+	RIGHT JOIN CAR_PACKAGE C
+	ON C.ModelNO=P.ModelNO AND C.PackageNO=P.PackageNO
+	WHERE P.ModelNO IS NULL
+)
+END;--Option içermeyen paket alýmý
+
+GO
+CREATE FUNCTION dbo.AddPackageUnSoldCar()
+RETURNS INT 
+AS BEGIN RETURN
+(
+    SELECT COUNT(*)
+	FROM CAR_PACKAGE C
+	LEFT JOIN SALE S
+	ON S.SerialNO=C.SerialNO
+	WHERE S.SerialNO IS NULL 
+)
+END;--satýlmayan arabaya paket ekleme
+
+GO
+CREATE FUNCTION dbo.AddOptionUnSoldCar()
+RETURNS INT 
+AS BEGIN RETURN 
+(
+    SELECT COUNT(*)
+	FROM CAR_OPTION C
+	LEFT JOIN SALE S
+	ON S.SerialNO=C.SerialNO
+	WHERE S.SerialNO IS NULL
+)
+END;
+
+GO
+ALTER TABLE CAR_PACKAGE ADD CONSTRAINT AddPackageInvalidModel CHECK (dbo.ModelNoControlCarPackage()=0);
+GO
+ALTER TABLE CAR_OPTION ADD CONSTRAINT AddOptionInvalidModel CHECK (dbo.ModelNoContrlCarOption()=0);
+GO
+ALTER TABLE CAR_PACKAGE ADD CONSTRAINT NotIncluedOptionPackage CHECK (dbo.NumberOfOption()=0);
+GO
+ALTER TABLE CAR_PACKAGE ADD CONSTRAINT AddPackageForUnSoldCar CHECK (dbo.AddPackageUnSoldCar()=0);
+GO
+ALTER TABLE CAR_OPTION ADD CONSTRAINT AddOptionForUnSoldCar CHECK (dbo.AddOptionUnSoldCar()=0);
